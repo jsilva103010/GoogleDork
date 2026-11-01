@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Estate Planning PPC Manager{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">⚖️ Estate Planning PPC Manager</a>
+    <nav>
+      <a href="/">Firms</a>
+      <a href="/firms/new">+ New Firm</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    {% if request.query_params.get('message') %}
+      <div class="flash flash-ok">{{ request.query_params.get('message') }}</div>
+    {% endif %}
+    {% if request.query_params.get('error') %}
+      <div class="flash flash-error">{{ request.query_params.get('error') }}</div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <p>Automated AI Google PPC manager for estate planning law firms — demo build.</p>
+  </footer>
+</body>
+</html>

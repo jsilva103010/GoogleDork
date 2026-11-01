@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ firm.name }}{% endblock %}
+{% block content %}
+
+<h1>{{ firm.name }}</h1>
+<p class="muted">{{ firm.city }}, {{ firm.state }} · {{ firm.phone }} · <a href="{{ firm.website }}" target="_blank">{{ firm.website }}</a></p>
+
+<div class="detail-grid">
+  <div>
+    <h3>Profile</h3>
+    <dl>
+      <dt>Service area</dt><dd>{{ firm.service_area }}</dd>
+      <dt>State bar</dt><dd>{{ firm.state_bar_jurisdiction }}</dd>
+      <dt>Monthly budget</dt><dd>${{ "%.0f"|format(firm.monthly_budget) }}</dd>
+      <dt>Target cost/lead</dt><dd>${{ "%.0f"|format(firm.target_cpa) }}</dd>
+      <dt>Practice areas</dt>
+      <dd>{% for a in firm.practice_areas %}<span class="tag">{{ a.value.replace('_',' ').title() }}</span>{% endfor %}</dd>
+      <dt>Selling points</dt>
+      <dd>{{ firm.unique_selling_points | join(", ") if firm.unique_selling_points else "—" }}</dd>
+    </dl>
+  </div>
+
+  <div>
+    <h3>Campaigns</h3>
+    {% if not campaigns %}
+      <p class="empty-state">No campaign yet.</p>
+    {% else %}
+      <ul class="plain-list">
+        {% for c in campaigns %}
+          <li><a href="/campaigns/{{ c.id }}">{{ c.name }}</a> <span class="muted">({{ c.status }})</span></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <form method="post" action="/firms/{{ firm.id }}/generate-campaign">
+      <button type="submit" {{ "disabled" if not has_key else "" }}>
+        🤖 Generate {{ "Another " if campaigns else "" }}AI Campaign
+      </button>
+    </form>
+    {% if not has_key %}
+      <p class="muted small">Set ANTHROPIC_API_KEY in .env to enable AI campaign generation.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

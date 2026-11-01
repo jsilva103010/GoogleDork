@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}New Firm{% endblock %}
+{% block content %}
+
+<h1>Add an Estate Planning Law Firm</h1>
+
+<form method="post" action="/firms" class="form">
+  <label>Firm name
+    <input type="text" name="name" required placeholder="Harborview Estate Law Group">
+  </label>
+
+  <label>Website
+    <input type="url" name="website" required placeholder="https://harborviewestatelaw.com">
+  </label>
+
+  <label>Phone
+    <input type="tel" name="phone" required placeholder="(555) 123-4567">
+  </label>
+
+  <div class="form-row">
+    <label>City
+      <input type="text" name="city" required placeholder="Portland">
+    </label>
+    <label>State
+      <input type="text" name="state" required placeholder="OR">
+    </label>
+  </div>
+
+  <label>Service area (cities/counties, comma separated)
+    <input type="text" name="service_area" required placeholder="Portland, Beaverton, Lake Oswego, Washington County">
+  </label>
+
+  <label>State bar jurisdiction (whose advertising rules apply)
+    <input type="text" name="state_bar_jurisdiction" required placeholder="Oregon State Bar">
+  </label>
+
+  <fieldset>
+    <legend>Practice areas to advertise</legend>
+    {% for area in practice_areas %}
+      <label class="checkbox">
+        <input type="checkbox" name="practice_areas" value="{{ area.value }}"> {{ area.value.replace('_', ' ').title() }}
+      </label>
+    {% endfor %}
+  </fieldset>
+
+  <div class="form-row">
+    <label>Monthly ad budget ($)
+      <input type="number" name="monthly_budget" min="500" step="50" required value="6000">
+    </label>
+    <label>Target cost per lead ($)
+      <input type="number" name="target_cpa" min="10" step="5" required value="250">
+    </label>
+  </div>
+
+  <label>Unique selling points (comma separated)
+    <input type="text" name="unique_selling_points" placeholder="Flat-fee packages, 30+ years experience, evening appointments available">
+  </label>
+
+  <button type="submit">Create Firm Profile</button>
+</form>
+
+{% endblock %}

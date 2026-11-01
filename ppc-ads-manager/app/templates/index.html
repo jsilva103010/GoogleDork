@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Firms — Estate Planning PPC Manager{% endblock %}
+{% block content %}
+
+<section class="status-bar">
+  <div class="status-pill {{ 'ok' if has_key else 'warn' }}">
+    {% if has_key %}✓ Claude API connected{% else %}⚠ ANTHROPIC_API_KEY not set — AI generation disabled{% endif %}
+  </div>
+  <div class="status-pill">Google Ads mode: <strong>{{ google_ads_mode }}</strong></div>
+  <div class="status-pill">Auto-apply optimizations: <strong>{{ "on" if auto_apply else "off (recommend-only)" }}</strong></div>
+</section>
+
+<h1>Firms</h1>
+
+{% if not firms %}
+  <p class="empty-state">No firms yet. <a href="/firms/new">Add your first estate planning law firm →</a></p>
+{% else %}
+  <div class="card-grid">
+    {% for firm in firms %}
+      <a class="card" href="/firms/{{ firm.id }}">
+        <h3>{{ firm.name }}</h3>
+        <p>{{ firm.city }}, {{ firm.state }}</p>
+        <p class="muted">{{ firm.practice_areas | length }} practice area(s) · ${{ "%.0f"|format(firm.monthly_budget) }}/mo budget</p>
+        <p class="muted">{{ campaigns_by_firm.get(firm.id, []) | length }} campaign(s)</p>
+      </a>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% endblock %}

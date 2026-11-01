@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}{{ campaign.name }}{% endblock %}
+{% block content %}
+
+<p class="muted"><a href="/firms/{{ firm.id }}">← {{ firm.name }}</a></p>
+<h1>{{ campaign.name }}</h1>
+<p class="muted">Status: <strong>{{ campaign.status }}</strong> · Daily budget: <strong>${{ "%.2f"|format(campaign.daily_budget) }}</strong> · Ad schedule: {{ campaign.ad_schedule }}</p>
+
+{% if campaign.compliance_notes %}
+  <div class="flash flash-warn">
+    <strong>Compliance filter removed {{ campaign.compliance_notes | length }} line(s) from the AI draft:</strong>
+    <ul>{% for note in campaign.compliance_notes %}<li>{{ note }}</li>{% endfor %}</ul>
+  </div>
+{% endif %}
+
+{% if campaign.strategy_notes %}
+  <div class="callout-box">
+    <strong>Strategy notes:</strong> {{ campaign.strategy_notes }}
+  </div>
+{% endif %}
+
+<section class="summary-strip">
+  <div><span class="num">{{ summary.impressions }}</span><span class="label">Impressions</span></div>
+  <div><span class="num">{{ summary.clicks }}</span><span class="label">Clicks</span></div>
+  <div><span class="num">{{ summary.ctr }}%</span><span class="label">CTR</span></div>
+  <div><span class="num">${{ summary.cost }}</span><span class="label">Spend</span></div>
+  <div><span class="num">${{ summary.avg_cpc }}</span><span class="label">Avg CPC</span></div>
+  <div><span class="num">{{ summary.conversions }}</span><span class="label">Leads</span></div>
+  <div><span class="num">{{ "$" + summary.cost_per_conversion|string if summary.cost_per_conversion else "—" }}</span><span class="label">Cost/Lead</span></div>
+</section>
+
+<div class="action-bar">
+  {% if google_ads_mode == "mock" %}
+    <form method="post" action="/campaigns/{{ campaign.id }}/simulate">
+      <button type="submit">▶ Simulate a Day of Traffic</button>
+    </form>
+  {% endif %}
+  <form method="post" action="/campaigns/{{ campaign.id }}/optimize">
+    <button type="submit">⚙ Run Optimization Cycle Now</button>
+  </form>
+</div>
+
+<section>
+  <h2>Recommendations {{ "(auto-applied)" if auto_apply else "(pending review)" }}</h2>
+  {% if not pending_actions %}
+    <p class="empty-state">No pending recommendations. Simulate traffic, then run an optimization cycle to generate some.</p>
+  {% else %}
+    <table class="data-table">
+      <thead><tr><th>Action</th><th>Target</th><th>Reason</th><th></th></tr></thead>
+      <tbody>
+        {% for a in pending_actions %}
+          <tr>
+            <td><span class="tag tag-{{ a.action_type }}">{{ a.action_type.replace('_',' ') }}</span></td>
+            <td>{{ a.target }}</td>
+            <td>{{ a.reason }}</td>
+            <td class="actions-cell">
+              <form method="post" action="/optimization-actions/{{ a.id }}/apply"><button type="submit" class="btn-small btn-ok">Apply</button></form>
+              <form method="post" action="/optimization-actions/{{ a.id }}/dismiss"><button type="submit" class="btn-small btn-muted">Dismiss</button></form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  {% if applied_actions %}
+    <details class="applied-log">
+      <summary>{{ applied_actions | length }} previously applied action(s)</summary>
+      <ul class="plain-list">
+        {% for a in applied_actions %}<li><span class="tag tag-{{ a.action_type }}">{{ a.action_type.replace('_',' ') }}</span> {{ a.target }} — {{ a.reason }}</li>{% endfor %}
+      </ul>
+    </details>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Callouts &amp; Sitelinks</h2>
+  <div class="chips">{% for c in campaign.callouts %}<span class="chip">{{ c }}</span>{% endfor %}</div>
+  <div class="sitelink-grid">
+    {% for s in campaign.sitelinks %}
+      <div class="sitelink">
+        <strong>{{ s.text }}</strong>
+        <p>{{ s.description1 }}<br>{{ s.description2 }}</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section>
+  <h2>Ad Groups</h2>
+  {% for ag in ad_groups %}
+    <article class="ad-group">
+      <h3>{{ ag.name }} <span class="tag">{{ ag.practice_area.value.replace('_',' ').title() }}</span></h3>
+
+      <div class="rsa-preview">
+        <div class="rsa-headline">{{ ag.ad.headlines[0] }} | {{ ag.ad.headlines[1] if ag.ad.headlines|length > 1 else "" }}</div>
+        <div class="rsa-url">{{ firm.website }}/{{ ag.ad.path1 }}/{{ ag.ad.path2 }}</div>
+        <div class="rsa-desc">{{ ag.ad.descriptions[0] }}</div>
+        <details>
+          <summary>All {{ ag.ad.headlines|length }} headlines / {{ ag.ad.descriptions|length }} descriptions</summary>
+          <p><strong>Headlines:</strong> {{ ag.ad.headlines | join(" · ") }}</p>
+          <p><strong>Descriptions:</strong> {{ ag.ad.descriptions | join(" · ") }}</p>
+        </details>
+      </div>
+
+      <table class="data-table compact">
+        <thead><tr><th>Keyword</th><th>Match</th><th>Status</th><th>Max CPC</th><th>Clicks</th><th>Cost</th><th>Leads</th><th>Cost/Lead</th></tr></thead>
+        <tbody>
+          {% for kw in keywords_by_ad_group.get(ag.id, []) %}
+            <tr class="{{ 'row-paused' if kw.status == 'paused' else '' }}">
+              <td>{{ kw.text }}</td>
+              <td>{{ kw.match_type.value }}</td>
+              <td>{{ kw.status }}</td>
+              <td>${{ "%.2f"|format(kw.max_cpc) }}</td>
+              <td>{{ kw.clicks }}</td>
+              <td>${{ "%.2f"|format(kw.cost) }}</td>
+              <td>{{ kw.conversions }}</td>
+              <td>{{ "$%.2f"|format(kw.cost / kw.conversions) if kw.conversions else "—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <p class="muted small">Negative keywords: {{ ag.negative_keywords | join(", ") }}</p>
+    </article>
+  {% endfor %}
+</section>
+
+{% endblock %}
